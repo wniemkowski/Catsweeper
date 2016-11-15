@@ -30,9 +30,6 @@ class Board:
     def getClickedTile(self, mousePos):
         for tileId in range(0,self.Tiles.__len__(),1):
             if(self.Tiles[tileId].isClicked(mousePos)):
-                #for neightbours in self.getNeightbours(tileId).values():
-                    #if(neightbours != None):
-                       # self.Tiles[neightbours].isCovered = False
                 self.Tiles[tileId].isCovered = False
                 return self.Tiles[tileId]
 
