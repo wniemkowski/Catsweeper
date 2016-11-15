@@ -27,10 +27,40 @@ class Board:
                 tiles.append(tile)
         return tiles
 
+    def crash(self):
+        self.text = pygame.font.Font(None, 36).render("Game Over", True, (255, 255, 255))
+        self.text_rect = self.text.get_rect()
+        self.text_x = display.get_width() / 2 - self.text_rect.width / 2
+        self.text_y = display.get_height() / 2 - self.text_rect.height / 2
+        display.blit(self.text, [self.text_x, self.text_y])
+        print 'umarles ale jeszcze nie umiem Ci tego napisac'
+
+    def showBlanks(self, tileId):
+        self.neightbours = self.getNeightbours(tileId)
+        for x in self.neightbours:
+            self.Tiles[self.neightbours[x]].isCovered = False
+            if (self.Tiles[self.neightbours[x]].Type == 0):
+                # self.showBlanks(self.neightbours[x])
+                print self.neightbours[x]
+                # self.showBlanks(self.neightbours[x])
+
     def getClickedTile(self, mousePos):
         for tileId in range(0,self.Tiles.__len__(),1):
             if(self.Tiles[tileId].isClicked(mousePos)):
+                self.neightbours = self.getNeightbours(tileId)
                 self.Tiles[tileId].isCovered = False
+
+                if (self.Tiles[tileId].Type == 0):
+                    print 'BLANK'
+                    self.showBlanks(tileId)
+
+                if (self.Tiles[tileId].Type == eTileType.poo):
+                    print 'KUPA'
+                    self.crash()
+
+                if (self.Tiles[tileId].Type > 0):
+                    print 'Kotel'
+
                 return self.Tiles[tileId]
 
     def generatePoos(self):
