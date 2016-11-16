@@ -36,13 +36,12 @@ class Board:
         print 'umarles ale jeszcze nie umiem Ci tego napisac'
 
     def showBlanks(self, tileId):
-        self.neightbours = self.getNeightbours(tileId)
-        for x in self.neightbours:
-            self.Tiles[self.neightbours[x]].isCovered = False
-            if (self.Tiles[self.neightbours[x]].Type == 0):
-                # self.showBlanks(self.neightbours[x])
-                print self.neightbours[x]
-                # self.showBlanks(self.neightbours[x])
+        neightbours = {k: v for k, v in self.getNeightbours(tileId).iteritems() if self.Tiles[v].isCovered}
+
+        for x in neightbours:
+            self.Tiles[neightbours[x]].isCovered = False
+            if (self.Tiles[neightbours[x]].Type == eTileType.catNeutral):
+                self.showBlanks(neightbours[x])
 
     def getClickedTile(self, mousePos):
         for tileId in range(0,self.Tiles.__len__(),1):
