@@ -1,6 +1,7 @@
 import random
 import pygame
 from Images import Tile, eTileType, SpriteFactory
+from time import sleep, time
 
 
 class Board:
@@ -11,6 +12,7 @@ class Board:
         self.PooCount = pooCount
         self.generatePoos()
         self.setCats()
+        self.gameover = False
 
     def Draw(self):
         for tiles in self.Tiles:
@@ -33,7 +35,9 @@ class Board:
         self.text_x = display.get_width() / 2 - self.text_rect.width / 2
         self.text_y = display.get_height() / 2 - self.text_rect.height / 2
         display.blit(self.text, [self.text_x, self.text_y])
-        print 'umarles ale jeszcze nie umiem Ci tego napisac'
+        self.gameover = True
+
+        # print 'umarles ale jeszcze nie umiem Ci tego napisac'
 
     def showBlanks(self, tileId):
         neightbours = {k: v for k, v in self.getNeightbours(tileId).iteritems() if self.Tiles[v].isCovered}
@@ -130,10 +134,16 @@ def main():
             if event.type == pygame.QUIT: # If user clicked close
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                board.getClickedTile(pygame.mouse.get_pos())
+                if (board.gameover):
+                    board = Board(boardSize, tileSize, spacing, pooCount)
+                else:
+                    board.getClickedTile(pygame.mouse.get_pos())
 
         display.fill((0,0,0))
-        board.Draw()
+        if (board.gameover):
+            board.crash()
+        else:
+            board.Draw()
         pygame.display.flip()
         clock.tick(60)
 
