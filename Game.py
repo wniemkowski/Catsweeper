@@ -1,43 +1,51 @@
 import random
 import pygame
-from Images import Tile, eTileType, SpriteFactory
-from time import sleep, time
+import time
+from Images import Tile, eTileType
 
 
 class Board:
     def __init__(self, boardSize, tileSize, spacing, pooCount):
         self.Spacing = spacing
         self.BoardSize = boardSize
+        self.pointsBoardHeight = 50
         self.Tiles = self.CreateBoard(self.BoardSize, tileSize)
         self.PooCount = pooCount
         self.generatePoos()
         self.setCats()
+        self.gameStart = time.time()
         self.gameover = False
 
     def Draw(self):
         for tiles in self.Tiles:
             display.blit(tiles.GetImage(), (tiles.X, tiles.Y))
 
+    def DrawPoints(self):
+        notMarkedPoos = self.PooCount - sum(1 for tile in self.Tiles if tile.isMarked)
+        currTime = time.time() - self.gameStart
+        text = pygame.font.Font(None, 36).render("poos: " + str(notMarkedPoos), True, (255, 255, 255))
+        timeText = pygame.font.Font(None, 36).render("time: " + str(int(currTime)), True, (255, 255, 255))
+        display.blit(text, [10,self.pointsBoardHeight/2 - 10])
+        display.blit(timeText, [(20 + self.Spacing) * self.BoardSize, self.pointsBoardHeight/2 - 10])
+
     def CreateBoard(self, boardSize, tileSize):
         tiles = []
         for col in range(0, boardSize):
             for row in range(0, boardSize):
                 tile = Tile(row * tileSize + self.Spacing * row,
-                            col * tileSize + self.Spacing * col,
+                            col * tileSize + self.Spacing * col + self.pointsBoardHeight,
                             tileSize,
                             eTileType.uncovered)
                 tiles.append(tile)
         return tiles
 
     def crash(self):
-        self.text = pygame.font.Font(None, 36).render("Game Over", True, (255, 255, 255))
-        self.text_rect = self.text.get_rect()
-        self.text_x = display.get_width() / 2 - self.text_rect.width / 2
-        self.text_y = display.get_height() / 2 - self.text_rect.height / 2
-        display.blit(self.text, [self.text_x, self.text_y])
+        text = pygame.font.Font(None, 36).render("Game Over", True, (255, 255, 255))
+        text_rect = text.get_rect()
+        text_x = display.get_width() / 2 - text_rect.width / 2
+        text_y = display.get_height() / 2 - text_rect.height / 2
+        display.blit(text, [text_x, text_y])
         self.gameover = True
-
-        # print 'umarles ale jeszcze nie umiem Ci tego napisac'
 
     def showBlanks(self, tileId):
         neightbours = {k: v for k, v in self.getNeightbours(tileId).iteritems() if self.Tiles[v].isCovered}
@@ -50,6 +58,10 @@ class Board:
     def getClickedTile(self, mousePos):
         for tileId in range(0, self.Tiles.__len__(), 1):
             if (self.Tiles[tileId].isClicked(mousePos)):
+
+                if (self.Tiles[tileId].isMarked or not self.Tiles[tileId].isCovered):
+                    continue
+
                 self.neightbours = self.getNeightbours(tileId)
                 self.Tiles[tileId].isCovered = False
 
@@ -117,6 +129,10 @@ class Board:
 
         return {k: v for k, v in allNeightbours.items() if v}
 
+    def MarkTile(self, mousePos):
+        for tileId in range(0, self.Tiles.__len__(), 1):
+            if (self.Tiles[tileId].isClicked(mousePos) and self.Tiles[tileId].isCovered == True):
+                self.Tiles[tileId].setMarked(not self.Tiles[tileId].isMarked)
 
 def main():
     pygame.init()
@@ -126,7 +142,7 @@ def main():
     spacing = 2
     clock = pygame.time.Clock()
     global display
-    display = pygame.display.set_mode([boardSize * (tileSize + spacing), boardSize * (tileSize + spacing)])
+    display = pygame.display.set_mode([boardSize * (tileSize + spacing), boardSize * (tileSize + spacing) + 50])
     board = Board(boardSize, tileSize, spacing, pooCount)
     running = True
     while running:
@@ -139,7 +155,7 @@ def main():
                 else:
                     board.getClickedTile(pygame.mouse.get_pos())
             elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed() == (0, 0, 1):  # RIGHT BUTTON
-                pass
+                board.MarkTile(pygame.mouse.get_pos())
             elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed() == (1, 0, 1):  # RIGHT AND LEFT
                 pass
 
@@ -148,6 +164,7 @@ def main():
             board.crash()
         else:
             board.Draw()
+            board.DrawPoints()
         pygame.display.flip()
         clock.tick(60)
 
