@@ -14,7 +14,8 @@ class Board:
         self.generatePoos()
         self.setCats()
         self.gameStart = time.time()
-        self.gameover = False
+        self.isGameOver = False
+        self.isWon = False
 
     def Draw(self):
         for tiles in self.Tiles:
@@ -28,6 +29,11 @@ class Board:
         display.blit(text, [10,self.pointsBoardHeight/2 - 10])
         display.blit(timeText, [(20 + self.Spacing) * self.BoardSize, self.pointsBoardHeight/2 - 10])
 
+    def CheckIfWon(self):
+        countOfCorrectlyMarkedPoos = sum(1 for tile in self.Tiles if tile.Type == eTileType.poo and tile.isMarked == True)
+        allMarks = sum(1 for tile in self.Tiles if tile.isMarked == True)
+        self.isWon = countOfCorrectlyMarkedPoos == self.PooCount == allMarks
+
     def CreateBoard(self, boardSize, tileSize):
         tiles = []
         for col in range(0, boardSize):
@@ -39,13 +45,13 @@ class Board:
                 tiles.append(tile)
         return tiles
 
-    def crash(self):
-        text = pygame.font.Font(None, 36).render("Game Over", True, (255, 255, 255))
+    def DisplayMessage(self):
+        TextToDispay = "Game Over" if self.isGameOver else "You Won!"
+        text = pygame.font.Font(None, 36).render(TextToDispay, True, (255, 255, 255))
         text_rect = text.get_rect()
         text_x = display.get_width() / 2 - text_rect.width / 2
         text_y = display.get_height() / 2 - text_rect.height / 2
         display.blit(text, [text_x, text_y])
-        self.gameover = True
 
     def showBlanks(self, tileId):
         neightbours = {k: v for k, v in self.getNeightbours(tileId).iteritems() if self.Tiles[v].isCovered}
@@ -58,7 +64,6 @@ class Board:
     def getClickedTile(self, mousePos):
         for tileId in range(0, self.Tiles.__len__(), 1):
             if (self.Tiles[tileId].isClicked(mousePos)):
-
                 if (self.Tiles[tileId].isMarked or not self.Tiles[tileId].isCovered):
                     continue
 
@@ -66,17 +71,19 @@ class Board:
                 self.Tiles[tileId].isCovered = False
 
                 if (self.Tiles[tileId].Type == 0):
-                    print 'BLANK'
                     self.showBlanks(tileId)
-
                 if (self.Tiles[tileId].Type == eTileType.poo):
-                    print 'KUPA'
-                    self.crash()
+                    self.isGameOver = True
 
-                if (self.Tiles[tileId].Type > 0):
-                    print 'Kotel'
+        if(self.CheckIfWon()):
+            self.DisplayMessage()
 
-                return self.Tiles[tileId]
+    def MarkTile(self, mousePos):
+        for tileId in range(0, self.Tiles.__len__(), 1):
+            if (self.Tiles[tileId].isClicked(mousePos) and self.Tiles[tileId].isCovered == True):
+                self.Tiles[tileId].setMarked(not self.Tiles[tileId].isMarked)
+        if(self.CheckIfWon()):
+            self.DisplayMessage()
 
     def generatePoos(self):
         seq = random.sample(xrange(0, self.Tiles.__len__()), self.PooCount)
@@ -107,7 +114,7 @@ class Board:
             'lowerRight': tileId + self.BoardSize + 1
         }
 
-        if (tileId <= self.BoardSize):
+        if (tileId < self.BoardSize):
             allNeightbours['upperLeft'] = None
             allNeightbours['upperMiddle'] = None
             allNeightbours['upperRight'] = None
@@ -127,12 +134,8 @@ class Board:
             allNeightbours['MiddleRight'] = None
             allNeightbours['lowerRight'] = None
 
-        return {k: v for k, v in allNeightbours.items() if v}
+        return {k: v for k, v in allNeightbours.items() if v is not None}
 
-    def MarkTile(self, mousePos):
-        for tileId in range(0, self.Tiles.__len__(), 1):
-            if (self.Tiles[tileId].isClicked(mousePos) and self.Tiles[tileId].isCovered == True):
-                self.Tiles[tileId].setMarked(not self.Tiles[tileId].isMarked)
 
 def main():
     pygame.init()
@@ -150,7 +153,7 @@ def main():
             if event.type == pygame.QUIT:  # If user clicked close
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed() == (1, 0, 0):  # LEFT BUTTON
-                if (board.gameover):
+                if board.isWon or board.isGameOver:
                     board = Board(boardSize, tileSize, spacing, pooCount)
                 else:
                     board.getClickedTile(pygame.mouse.get_pos())
@@ -160,8 +163,8 @@ def main():
                 pass
 
         display.fill((0, 0, 0))
-        if (board.gameover):
-            board.crash()
+        if (board.isGameOver or board.isWon):
+            board.DisplayMessage()
         else:
             board.Draw()
             board.DrawPoints()
